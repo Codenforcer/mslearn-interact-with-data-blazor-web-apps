@@ -45,4 +45,22 @@ public class OrdersController : Controller
 
         return order.OrderId;
     }
+
+    // Enables the order controller to respond to an http request with an order ID.
+    [HttpGet("{orderId}")]
+    public async Task<ActionResult<OrderWithStatus>> GetOrderWithStatus(int orderId)
+    {
+        var order = await _db.Orders
+            .Where(o => o.OrderId == orderId)
+            .Include(o => o.Pizzas).ThenInclude(p => p.Special)
+            .Include(o => o.Pizzas).ThenInclude(p => p.Toppings).ThenInclude(t => t.Topping)
+            .SingleOrDefaultAsync();
+
+        if (order == null)
+        {
+            return NotFound();
+        }
+
+        return OrderWithStatus.FromOrder(order);
+    }
 }
